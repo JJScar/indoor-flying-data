@@ -1,5 +1,4 @@
 import pandas as pd
-import sys
 
 flyers = pd.read_csv("./my_data.csv")
 
