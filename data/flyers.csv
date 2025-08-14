@@ -1,4 +1,4 @@
-id,name,age,level,total_time,current,instructor
-1,Jordan,25,3,100,1,0
-2,Ryan,23,2,50,0,0
-3,George,26,3,110,1,1
+id,first_name,surname,age,level,total_time,current,instructor
+1,Jordan,Solomon,25,3,100,1,0
+2,Ryan,O'Sullivan,23,2,50,0,0
+3,George,Scott,26,3,110,1,1
