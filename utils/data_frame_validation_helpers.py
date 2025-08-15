@@ -31,13 +31,13 @@ def validate_data_frame(df: pd.DataFrame, existing_df: pd.DataFrame) -> Dict[str
         'errors': [],
     }
     
-    result_structure = validate_data_frame_structure(df, len(expected_columns))
+    result_structure = validate_data_frame_structure(df, expected_columns)
     if result_structure['is_valid'] == False:
         if result_structure['errors']:
             overall_result['is_valid'] = False
             overall_result['errors'].append(result_structure['errors'])
     
-    result_types = validate_data_frame_types(df.dtypes)
+    result_types = validate_data_frame_types(df)
     if result_types['is_valid'] == False:
         if result_types['errors']:
             overall_result['is_valid'] = False
@@ -157,11 +157,47 @@ def validate_data_frame_ranges(df: pd.DataFrame) -> Dict[str, Any]:
         'errors': []
     }    
     
-    # Iterating over the df to make sure the elements comply with the constraints
-    # for item in df.items():
-    #     if df[item].isnull():
-    #         result['is_valid'] = False
-    #         result['errors'].append(f"{item} cannot be null.")
+    value_constraints = {
+        'id': {'min': 1, 'not_null': True},
+        'first_name': {'not_null': True},
+        'surname': {'not_null': True},
+        'age': {'min': 0, 'max': 120, 'not_null': True},
+        'level': {'min': 1, 'max': 5, 'not_null': True},
+        'total_time': {'min': 0, 'not_null': True},
+        'current': {'allowed_values': [0, 1], 'not_null': True},
+        'instructor': {'allowed_values': [0, 1], 'not_null': True}
+    }
+    
+    for column, rule in value_constraints.items():
+        # Checking if value is null
+        if rule.get('not_null', False):
+            if df[column].isnull().any():
+                result['is_valid'] = False
+                result['errors'].append(f"{column} cannot be null")
         
-    #     if df[item] == 'id':
-    #         if 
+        # Checking if the columns are above the necessary min value
+        if 'min' in rule:
+            min_val = rule['min']
+            if (df[column] < min_val).any():
+                result['is_valid'] = False
+                result['errors'].append(f"The {column} cannot be less than {min_val}")
+        
+        # Checking if the columns are less than the necessary max value
+        if 'max' in rule:
+            max_val = rule['max']
+            if (df[column] > max_val).any():
+                result['is_valid'] = False
+                result['errors'].append(f"The {column} cannot be more than {max_val}")  
+                
+        # Checking if the columns that need to have specific values comply
+        if 'allowed_values' in rule:
+            allowed = rule['allowed_values']
+            invalid_values = df[~df[column].isin(allowed)][column].unique()
+            if len(invalid_values) > 0:
+                result['is_valid'] = False
+                result['errors'].append(
+                    f"Column '{column}' has invalid values: {list(invalid_values)}. "
+                    f"Allowed values: {allowed}"
+                )
+                
+    return result
